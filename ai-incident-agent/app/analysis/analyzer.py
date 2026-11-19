@@ -115,7 +115,7 @@ class IncidentAnalyzer:
             f"Resource: {incident.resource_id}",
         ]
         return IncidentAnalysis(
-            summary="Local mock analysis completed. This report is illustrative and is not an AWS incident diagnosis.",
+            summary="Local Mock analysis completed. This report is illustrative and is not an AWS incident diagnosis.",
             probable_root_cause=probable_root_cause,
             confidence=confidence,
             impact="Potential application availability or response-time degradation; confirm using live telemetry.",
