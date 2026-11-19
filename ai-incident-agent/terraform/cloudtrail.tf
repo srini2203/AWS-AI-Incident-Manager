@@ -1,7 +1,7 @@
 locals {
-  cloudtrail_name        = "\${var.project_name}-audit"
-  cloudtrail_bucket_name = "\${var.project_name}-\${data.aws_caller_identity.current.account_id}-\${var.aws_region}-trail"
-  cloudtrail_arn         = "arn:\${data.aws_partition.current.partition}:cloudtrail:\${var.aws_region}:\${data.aws_caller_identity.current.account_id}:trail/\${local.cloudtrail_name}"
+  cloudtrail_name        = "${var.project_name}-audit"
+  cloudtrail_bucket_name = "${var.project_name}-${data.aws_caller_identity.current.account_id}-${var.aws_region}-trail"
+  cloudtrail_arn         = "arn:${data.aws_partition.current.partition}:cloudtrail:${var.aws_region}:${data.aws_caller_identity.current.account_id}:trail/${local.cloudtrail_name}"
 }
 
 resource "aws_s3_bucket" "cloudtrail" {
@@ -66,7 +66,7 @@ data "aws_iam_policy_document" "cloudtrail_bucket" {
       identifiers = ["cloudtrail.amazonaws.com"]
     }
     actions   = ["s3:PutObject"]
-    resources = ["\${aws_s3_bucket.cloudtrail.arn}/audit/AWSLogs/\${data.aws_caller_identity.current.account_id}/*"]
+    resources = ["${aws_s3_bucket.cloudtrail.arn}/audit/AWSLogs/${data.aws_caller_identity.current.account_id}/*"]
     condition {
       test     = "StringEquals"
       variable = "s3:x-amz-acl"

@@ -10,19 +10,19 @@ data "aws_iam_policy_document" "lambda_trust" {
 }
 
 resource "aws_iam_role" "incident" {
-  name               = "\${var.project_name}-incident-role"
+  name               = "${var.project_name}-incident-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_trust.json
   tags               = local.common_tags
 }
 
 resource "aws_iam_role" "approval" {
-  name               = "\${var.project_name}-approval-role"
+  name               = "${var.project_name}-approval-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_trust.json
   tags               = local.common_tags
 }
 
 resource "aws_iam_role_policy" "incident_permissions" {
-  name = "\${var.project_name}-incident-permissions"
+  name = "${var.project_name}-incident-permissions"
   role = aws_iam_role.incident.id
 
   policy = jsonencode({
@@ -61,7 +61,7 @@ resource "aws_iam_role_policy" "incident_permissions" {
         ]
         Resource = [
           for group in var.cloudwatch_log_groups :
-          "arn:\${data.aws_partition.current.partition}:logs:\${var.aws_region}:\${data.aws_caller_identity.current.account_id}:log-group:\${group}:*"
+          "arn:${data.aws_partition.current.partition}:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:${group}:*"
         ]
       },
       {
@@ -119,7 +119,7 @@ resource "aws_iam_role_policy" "incident_permissions" {
         ]
         Resource = [
           aws_cloudwatch_log_group.incident.arn,
-          "\${aws_cloudwatch_log_group.incident.arn}:*"
+          "${aws_cloudwatch_log_group.incident.arn}:*"
         ]
       },
       {
@@ -136,7 +136,7 @@ resource "aws_iam_role_policy" "incident_permissions" {
 }
 
 resource "aws_iam_role_policy" "approval_permissions" {
-  name = "\${var.project_name}-approval-permissions"
+  name = "${var.project_name}-approval-permissions"
   role = aws_iam_role.approval.id
 
   policy = jsonencode({
@@ -172,7 +172,7 @@ resource "aws_iam_role_policy" "approval_permissions" {
         ]
         Resource = [
           aws_cloudwatch_log_group.approval.arn,
-          "\${aws_cloudwatch_log_group.approval.arn}:*"
+          "${aws_cloudwatch_log_group.approval.arn}:*"
         ]
       },
       {

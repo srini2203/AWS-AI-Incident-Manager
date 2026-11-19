@@ -13,7 +13,7 @@ resource "aws_sns_topic_policy" "incidents" {
       Sid    = "AllowAccountManagement"
       Effect = "Allow"
       Principal = {
-        AWS = "arn:\${data.aws_partition.current.partition}:iam::\${data.aws_caller_identity.current.account_id}:root"
+        AWS = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:root"
       }
       Action = [
         "SNS:GetTopicAttributes",
