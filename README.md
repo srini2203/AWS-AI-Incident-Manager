@@ -1,81 +1,91 @@
-# Three-Tier Secure Highly Available AWS Infrastructure (Terraform)
+# Three-Tier Secure HA AWS Infrastructure and AI Incident Triage
 
-**Status: v1.0 — locked.** Future changes get a new version and a
-CHANGELOG entry, not silent edits.
+**Portfolio project:** Terraform-managed three-tier AWS infrastructure with an event-driven AI incident investigation agent.
 
 [![Terraform](https://img.shields.io/badge/IaC-Terraform-623CE4?logo=terraform)]()
 [![AWS](https://img.shields.io/badge/Cloud-AWS-FF9900?logo=amazon-aws)]()
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python)]()
 
 ## Overview
 
-A three-tier AWS architecture — web (ALB), application (EC2/ASG), and
-data (RDS Multi-AZ) — designed and implemented as Terraform, built while
-studying for the AWS Solutions Architect Associate (SAA-C03)
-certification.
+This repository combines a three-tier, highly available AWS application architecture with a separately managed AI incident triage system.
+
+The infrastructure layer contains a VPC, public and private subnets across two Availability Zones, an Application Load Balancer, an EC2 Auto Scaling Group, RDS Multi-AZ, Secrets Manager, IAM roles and CloudWatch alarms.
+
+The AI incident agent receives CloudWatch alarm state changes through EventBridge, gathers read-only metrics, application logs and ALB target health, and uses Amazon Bedrock Converse inference to produce an evidence-based incident report. SNS distributes reports, while API Gateway JWT authorization and DynamoDB support human approval records.
 
 ## Architecture
 
-![Architecture](architecture/images/Architecture_Diagram.png)
+![Three-tier architecture](architecture/images/Architecture_Diagram.png)
 
-Full write-up: [`architecture/architecture-specification.md`](architecture/architecture-specification.md)
+The incident agent design and workflow are documented in [ai-incident-agent/docs/architecture.md](ai-incident-agent/docs/architecture.md).
 
-## Deployment Status
+## Project status
 
-This project's Terraform is written and validated (`terraform validate`
-passes cleanly) but **not applied to a live AWS account**, to avoid
-ongoing cost while it sits as a portfolio piece.
+The repository contains Terraform source, application code, automated tests and deployment instructions. The AI incident agent is designed for deployment into the existing VPC using a separate Terraform state. The presence of source code or screenshots is not proof that the complete AI agent is deployed or validated in a live AWS account.
 
-The screenshots in [`/screenshots`](screenshots/) are from hands-on
-console configuration of the same services during SAA study — see
-[`docs/console-walkthrough.md`](docs/console-walkthrough.md) for how
-each one maps to the Terraform files.
+The existing three-tier resources were previously used for hands-on learning and cost-conscious experimentation. Review the AWS account before deployment; resources may need to be recreated.
 
-## Services Used
+## Repository structure
+
+\`\`\`text
+Three-Tier-Secure-HA-AWS/
+├── architecture/          design specification and diagrams
+├── docs/                  infrastructure decisions, security and cost notes
+├── kubernetes/            Kubernetes learning exercises
+├── screenshots/           hands-on AWS console evidence
+├── terraform/             three-tier application infrastructure
+└── ai-incident-agent/     Bedrock-powered incident triage application
+    ├── app/               diagnostics, security, analysis and workflow
+    ├── handlers/          Lambda entry points
+    ├── terraform/         separate AI agent infrastructure state
+    ├── tests/             automated test suite
+    └── docs/              architecture, security and deployment
+\`\`\`
+
+## Existing three-tier infrastructure
 
 | Service | Purpose |
 |---|---|
-| VPC, public/private subnets | Network isolation across 3 tiers |
-| Internet Gateway / NAT Gateway | Public ingress / controlled private egress |
-| Application Load Balancer | Layer 7 routing, health checks |
-| Auto Scaling Group | Elasticity, self-healing |
-| RDS MySQL (Multi-AZ) | Automatic failover |
-| Secrets Manager | No hardcoded DB credentials |
-| IAM Roles | No long-lived credentials on EC2 |
-| CloudWatch + SNS | Alarming |
+| VPC and subnets | Network separation across web, application and database tiers |
+| Internet Gateway and NAT Gateway | Public ingress and controlled private egress |
+| Application Load Balancer | Layer 7 routing and health checks |
+| Auto Scaling Group | Elasticity and self-healing application instances |
+| RDS MySQL Multi-AZ | Managed relational database and failover |
+| Secrets Manager | Database credential storage |
+| IAM roles and SSM | Temporary role credentials and managed instance access |
+| CloudWatch and SNS | Monitoring and alarm notifications |
 
-## Repository Structure
+## AI incident triage agent
 
-```text
-three-tier-ha-aws/
-├── architecture/     — design doc + diagrams
-├── terraform/        — flat .tf files, validate-only
-├── docs/             — decisions, security, cost, tradeoffs, interview prep
-└── screenshots/      — hands-on AWS console evidence from SAA study
-```
+| Component | Responsibility |
+|---|---|
+| EventBridge | Routes CloudWatch alarm state changes |
+| Lambda | Coordinates incident investigations |
+| CloudWatch | Collects metrics and application logs |
+| Elastic Load Balancing v2 | Reports target health |
+| Amazon Bedrock | Produces evidence-based root-cause analysis |
+| Bedrock Guardrails | Filters prompt attacks and sensitive information |
+| SNS | Distributes incident and approval notifications |
+| API Gateway JWT authorizer | Authenticates approval requests |
+| DynamoDB | Stores approval state and expiry |
+| CloudTrail | Records multi-region management events |
+| Terraform | Provisions the AI agent infrastructure separately |
 
-## Getting Started
+The agent does not autonomously modify EC2, Auto Scaling, RDS or load-balancer resources. Approval decisions are recorded, but a separate remediation executor is not included.
 
-```bash
-cd terraform
-cp terraform.tfvars.example terraform.tfvars   # fill in your own values
-terraform init
-terraform validate
-terraform plan   # optional — shows what WOULD be created; not applied in this repo
-```
+## Getting started
 
-## Learning Outcomes
+Start with the original infrastructure in [terraform/](terraform/). The AI incident agent has its own setup instructions in [ai-incident-agent/README.md](ai-incident-agent/README.md).
 
-VPC design, subnet tiering, security group least-privilege, RDS
-Multi-AZ, Auto Scaling, IAM roles, Terraform fundamentals, and
-translating hands-on console work into Infrastructure as Code.
+Before deploying the AI agent, publish the required root Terraform outputs, build the Lambda ZIP, configure the Bedrock inference profile and supply a real JWT issuer and audience. Follow [ai-incident-agent/docs/deployment.md](ai-incident-agent/docs/deployment.md).
 
-## Future Improvements
+## Security and cost
 
-- Live deployment on AWS free tier
-- WAF on the ALB
-- CI/CD pipeline (GitHub Actions)
-- Custom least-privilege IAM policy for Secrets Manager access
+See [docs/security.md](docs/security.md) for the application controls and [ai-incident-agent/docs/security.md](ai-incident-agent/docs/security.md) for AI evidence handling, least privilege, network isolation and approval authorization.
+
+Interface VPC endpoints, NAT Gateway usage, CloudTrail storage, Lambda, DynamoDB, SNS and Bedrock inference can incur charges. Review Terraform plans and [ai-incident-agent/docs/cleanup.md](ai-incident-agent/docs/cleanup.md) before deployment.
 
 ## Author
 
-**V. Srinivasan** — Cloud Engineering · AWS · Terraform
+**V. Srinivasan** — Cloud Engineering · AWS · Terraform · Python

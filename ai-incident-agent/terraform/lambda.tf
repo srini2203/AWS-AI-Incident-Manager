@@ -40,6 +40,8 @@ resource "aws_lambda_function" "incident" {
     variables = {
       APP_NAME                            = var.project_name
       APP_ENV                             = var.environment
+      ANALYZER_MODE = "bedrock"
+      DIAGNOSTICS_MODE = "aws"
       BEDROCK_MODEL_ID                    = var.bedrock_model_id
       BEDROCK_MAX_TOKENS                  = tostring(var.bedrock_max_tokens)
       BEDROCK_TEMPERATURE                 = tostring(var.bedrock_temperature)
@@ -50,7 +52,7 @@ resource "aws_lambda_function" "incident" {
       BEDROCK_MAX_EVIDENCE_CHARS          = "30000"
       ENABLE_BEDROCK_GUARDRAILS            = tostring(var.enable_bedrock_guardrails)
       BEDROCK_GUARDRAIL_ID                = var.enable_bedrock_guardrails ? aws_bedrock_guardrail.incident[0].guardrail_id : ""
-      BEDROCK_GUARDRAIL_VERSION           = BEDROCK_GUARDRAIL_VERSION = var.enable_bedrock_guardrails ? aws_bedrock_guardrail_version.incident[0].version : ""
+      BEDROCK_GUARDRAIL_VERSION = var.enable_bedrock_guardrails ? aws_bedrock_guardrail_version.incident[0].version : ""
       CLOUDWATCH_LOG_GROUPS               = join(",", var.cloudwatch_log_groups)
       CLOUDWATCH_LOG_LOOKBACK_MINUTES     = "15"
       CLOUDWATCH_LOG_QUERY_TIMEOUT_SECONDS = "30"
@@ -89,7 +91,6 @@ resource "aws_lambda_function" "incident" {
 
   depends_on = [
     aws_iam_role_policy.incident_permissions,
-    aws_iam_role_policy_attachment.incident_vpc_access,
     aws_cloudwatch_log_group.incident
   ]
 }
@@ -144,7 +145,6 @@ resource "aws_lambda_function" "approval" {
 
   depends_on = [
     aws_iam_role_policy.approval_permissions,
-    aws_iam_role_policy_attachment.approval_vpc_access,
     aws_cloudwatch_log_group.approval
   ]
 }

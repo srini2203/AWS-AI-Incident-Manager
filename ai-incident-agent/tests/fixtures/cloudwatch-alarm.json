@@ -1,0 +1,31 @@
+{
+  "id": "local-sample-incident-001",
+  "source": "aws.cloudwatch",
+  "detail-type": "CloudWatch Alarm State Change",
+  "account": "123456789012",
+  "region": "ap-south-1",
+  "time": "2026-11-19T10:00:00Z",
+  "resources": [
+    "arn:aws:cloudwatch:ap-south-1:123456789012:alarm:sample-high-cpu"
+  ],
+  "detail": {
+    "alarmName": "sample-high-cpu",
+    "state": {
+      "value": "ALARM",
+      "reason": "Sample CPU threshold exceeded"
+    },
+    "configuration": {
+      "description": "Sample high CPU alarm for local mock execution"
+    },
+    "trigger": {
+      "metricName": "CPUUtilization",
+      "namespace": "AWS/EC2",
+      "dimensions": [
+        {
+          "name": "InstanceId",
+          "value": "i-0123456789abcdef0"
+        }
+      ]
+    }
+  }
+}

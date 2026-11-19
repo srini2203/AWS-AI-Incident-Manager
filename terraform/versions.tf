@@ -6,16 +6,15 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
-
-    archive = {
-      source  = "hashicorp/archive"
-      version = "~> 2.7"
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.5"
     }
   }
 
   backend "s3" {
     bucket       = "three-tier-ha-aws-643681787444-ap-south-1-tfstate"
-    key          = "ai-incident-agent/terraform.tfstate"
+    key          = "three-tier-ha-aws/terraform.tfstate"
     region       = "ap-south-1"
     encrypt      = true
     use_lockfile = true

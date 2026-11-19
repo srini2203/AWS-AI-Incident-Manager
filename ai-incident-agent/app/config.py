@@ -78,7 +78,7 @@ def get_csv(name: str) -> list[str]:
 
 
 APP_NAME = "aws-ai-incident-triage-agent"
-APP_ENV = os.getenv("APP_ENV", "production").strip().lower()
+APP_ENV = os.getenv("APP_ENV", "development").strip().lower()
 
 AWS_REGION = os.getenv("AWS_REGION", "ap-south-1").strip()
 
@@ -282,12 +282,23 @@ PROMPT_VERSION = os.getenv(
     "PROMPT_VERSION",
     "1.0",
 ).strip()
+ANALYZER_MODE = os.getenv("ANALYZER_MODE", "mock").strip().lower()
+DIAGNOSTICS_MODE = os.getenv("DIAGNOSTICS_MODE", "mock").strip().lower()
 
 if not AWS_REGION:
     raise ValueError("AWS_REGION cannot be empty")
 
 if not BEDROCK_MODEL_ID:
     raise ValueError("BEDROCK_MODEL_ID cannot be empty")
+
+if ANALYZER_MODE not in {"mock", "bedrock"}:
+    raise ValueError("ANALYZER_MODE must be mock or bedrock")
+
+if DIAGNOSTICS_MODE not in {"mock", "aws"}:
+    raise ValueError("DIAGNOSTICS_MODE must be mock or aws")
+
+if APP_ENV in {"prod", "production"} and (ANALYZER_MODE != "bedrock" or DIAGNOSTICS_MODE != "aws"):
+    raise ValueError("Production requires ANALYZER_MODE=bedrock and DIAGNOSTICS_MODE=aws")
 
 if ENABLE_BEDROCK_GUARDRAILS:
     if not BEDROCK_GUARDRAIL_ID:

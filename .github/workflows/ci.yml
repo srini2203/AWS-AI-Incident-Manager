@@ -1,0 +1,57 @@
+name: Project CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: ai-incident-agent/requirements.txt
+      - name: Install dependencies
+        working-directory: ai-incident-agent
+        run: python -m pip install -r requirements.txt
+      - name: Run tests
+        working-directory: ai-incident-agent
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+
+  terraform-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build Lambda deployment package
+        working-directory: ai-incident-agent
+        run: |
+          python -m pip install -r requirements.txt --target package
+          mkdir -p dist
+          cp -R app handlers package/
+          python -c "import shutil; shutil.make_archive('dist/incident-agent', 'zip', 'package')"
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.10.5"
+      - name: Validate application infrastructure
+        working-directory: terraform
+        run: |
+          terraform fmt -recursive
+          terraform init -backend=false
+          terraform validate
+      - name: Validate incident agent infrastructure
+        working-directory: ai-incident-agent/terraform
+        run: |
+          terraform fmt -recursive
+          terraform init -backend=false
+          terraform validate

@@ -1,0 +1,37 @@
+project_name = "aws-ai-incident-agent"
+environment  = "dev"
+aws_region   = "ap-south-1"
+
+application_state_bucket = "three-tier-ha-aws-643681787444-ap-south-1-tfstate"
+application_state_key    = "three-tier-ha-aws/terraform.tfstate"
+application_state_region = "ap-south-1"
+
+lambda_runtime              = "python3.12"
+lambda_architecture         = "x86_64"
+lambda_memory_size          = 1024
+lambda_timeout_seconds      = 180
+lambda_reserved_concurrency = 5
+
+bedrock_model_id          = "apac.amazon.nova-micro-v1:0"
+bedrock_max_tokens        = 1800
+bedrock_temperature       = 0.1
+enable_bedrock_guardrails = true
+
+cloudwatch_log_groups = [
+  "/aws/ec2/three-tier-app"
+]
+
+sns_topic_name   = "aws-ai-incident-notifications"
+notification_email = ""
+
+approval_table_name = "aws-ai-incident-approvals"
+approval_ttl_hours  = 24
+
+approval_jwt_issuer             = "https://YOUR-IDENTITY-PROVIDER/"
+approval_jwt_audience            = ["YOUR-APPROVAL-API-AUDIENCE"]
+approval_authorization_scopes   = ["approvals:write"]
+approver_groups                  = ["IncidentApprovers"]
+
+api_throttling_rate_limit  = 5
+api_throttling_burst_limit = 10
+log_retention_days          = 30

@@ -6,6 +6,8 @@ from uuid import uuid4
 
 from app.analysis.analyzer import IncidentAnalyzer
 from app.diagnostics.collector import IncidentEvidenceCollector
+from app.diagnostics.mock import MockIncidentEvidenceCollector
+from app.config import ANALYZER_MODE, DIAGNOSTICS_MODE
 from app.event_parser import parse_event
 from app.models import (
     ApprovalRequest,
@@ -35,10 +37,14 @@ class IncidentWorkflowOrchestrator:
 
         self.evidence_collector = (
             evidence_collector
-            or IncidentEvidenceCollector()
+            or (
+                MockIncidentEvidenceCollector()
+                if DIAGNOSTICS_MODE == "mock"
+                else IncidentEvidenceCollector()
+            )
         )
 
-        self.analyzer = analyzer or IncidentAnalyzer()
+        self.analyzer = analyzer or IncidentAnalyzer(mode=ANALYZER_MODE)
 
         self.notification_service = (
             notification_service
@@ -47,13 +53,7 @@ class IncidentWorkflowOrchestrator:
             )
         )
 
-        self.approval_service = (
-            approval_service
-            or ApprovalService(
-                notification_service=self.notification_service,
-                audit_logger=self.audit_logger,
-            )
-        )
+        self.approval_service = approval_service
 
     @staticmethod
     def _now() -> str:
