@@ -105,7 +105,7 @@ resource "aws_iam_role_policy" "bedrock_kb" {
           "s3vectors:QueryVectors"
         ]
         Resource = [
-          aws_s3vectors_vector_bucket.runbooks.arn,
+          aws_s3vectors_vector_bucket.runbooks.vector_bucket_arn,
           aws_s3vectors_index.runbooks.index_arn
         ]
       }
