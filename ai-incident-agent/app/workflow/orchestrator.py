@@ -34,7 +34,10 @@ class IncidentWorkflowOrchestrator:
             MockIncidentEvidenceCollector() if DIAGNOSTICS_MODE == "mock"
             else IncidentEvidenceCollector()
         )
-        self.analyzer = analyzer or IncidentAnalyzer(mode=ANALYZER_MODE)
+        self.analyzer = analyzer or (
+            IncidentAnalyzer(mode=ANALYZER_MODE)
+            if ANALYZER_MODE != "strands" else None
+        )
         self.incident_agent = incident_agent
         self.notification_service = notification_service or SNSNotificationService(audit_logger=self.audit_logger)
         self.approval_service = approval_service
@@ -103,6 +106,8 @@ class IncidentWorkflowOrchestrator:
                     agent_runner = self.incident_agent
                 analysis = agent_runner(incident, evidence)
             else:
+                if self.analyzer is None:
+                    raise RuntimeError("Incident analyzer is not configured")
                 analysis = self.analyzer.analyze(incident=incident, evidence=evidence)
         except Exception as exc:
             evidence.collection_errors.append(f"Incident analysis failed: {type(exc).__name__}")
