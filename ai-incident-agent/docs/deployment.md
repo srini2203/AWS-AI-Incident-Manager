@@ -57,14 +57,29 @@ Configure the identity provider to issue JWTs with the expected issuer, audience
 
 If an email subscription is configured, confirm the SNS subscription from the email AWS sends. An unconfirmed subscription does not receive notifications.
 
-## 6. Bedrock configuration
+## 6. Bedrock Knowledge Base and runbook ingestion
+
+Terraform creates a private S3 runbook source bucket, an S3 Vectors bucket and index, a Bedrock Knowledge Base, and its S3 data source. Reviewed Markdown files under ai-incident-agent/knowledge-base/runbooks are uploaded by Terraform. The incident Lambda receives the generated Knowledge Base ID and has only bedrock:Retrieve permission; it cannot ingest or modify the Knowledge Base.
+
+After the first apply, start the initial ingestion job using the AWS CLI:
+
+\x60\x60\x60bash
+aws bedrock-agent start-ingestion-job \\
+  --knowledge-base-id "$(terraform output -raw bedrock_knowledge_base_id)" \\
+  --data-source-id "$(terraform output -raw runbook_data_source_id)" \\
+  --region ap-south-1
+\x60\x60\x60
+
+Wait for the ingestion job to reach COMPLETE before expecting runbook retrieval results. Re-run the ingestion job after changing runbook documents and applying the updated S3 objects.
+
+## 7. Bedrock configuration
 
 The default model ID is apac.amazon.nova-micro-v1:0. Confirm that the inference profile is available and invocation is enabled for the AWS account. The account must have sufficient inference quota. The code uses Converse and does not bypass service quotas.
 
-## 7. Local invocation
+## 8. Local invocation
 
 The CLI defaults to mock diagnostics and mock analysis. For real calls set ANALYZER_MODE=bedrock and DIAGNOSTICS_MODE=aws, configure AWS credentials and set APP_ENV=development. Local real invocations require permissions equivalent to the incident Lambda role.
 
-## 8. Cost and teardown
+## 9. Cost and teardown
 
 This deployment creates billable AWS resources. See cleanup.md before applying and remove the stack when it is no longer required. The CloudTrail bucket is configured with force_destroy=false.
