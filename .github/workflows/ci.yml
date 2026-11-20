@@ -47,11 +47,11 @@ jobs:
         working-directory: terraform
         run: |
           terraform fmt -recursive
-          terraform init -backend=false -upgrade
+          terraform init -backend=false -upgrade -upgrade
           terraform validate
       - name: Validate incident agent infrastructure
         working-directory: ai-incident-agent/terraform
         run: |
           terraform fmt -recursive
-          terraform init -backend=false
+          terraform init -backend=false -upgrade
           terraform validate
