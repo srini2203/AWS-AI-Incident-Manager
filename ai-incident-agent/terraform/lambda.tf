@@ -12,24 +12,18 @@ resource "aws_cloudwatch_log_group" "approval" {
 
 resource "aws_lambda_function" "incident" {
   function_name = "${var.project_name}-incident"
-  description   = "Investigates AWS incidents using diagnostics and Amazon Bedrock"
-
+  description   = "Investigates AWS incidents using Strands Agents, diagnostics and Bedrock RAG"
   filename         = "${path.module}/../dist/incident-agent.zip"
   source_code_hash = filebase64sha256("${path.module}/../dist/incident-agent.zip")
-
   role          = aws_iam_role.incident.arn
   handler       = "handlers.incident_handler.lambda_handler"
   runtime       = var.lambda_runtime
   architectures = [var.lambda_architecture]
-
-  memory_size = var.lambda_memory_size
-  timeout     = var.lambda_timeout_seconds
-
+  memory_size   = var.lambda_memory_size
+  timeout       = var.lambda_timeout_seconds
   reserved_concurrent_executions = var.lambda_reserved_concurrency
 
-  ephemeral_storage {
-    size = 1024
-  }
+  ephemeral_storage { size = 1024 }
 
   vpc_config {
     subnet_ids         = local.private_app_subnet_ids
@@ -40,8 +34,8 @@ resource "aws_lambda_function" "incident" {
     variables = {
       APP_NAME                            = var.project_name
       APP_ENV                             = var.environment
-      ANALYZER_MODE = "bedrock"
-      DIAGNOSTICS_MODE = "aws"
+      ANALYZER_MODE                       = "strands"
+      DIAGNOSTICS_MODE                    = "aws"
       BEDROCK_MODEL_ID                    = var.bedrock_model_id
       BEDROCK_MAX_TOKENS                  = tostring(var.bedrock_max_tokens)
       BEDROCK_TEMPERATURE                 = tostring(var.bedrock_temperature)
@@ -50,9 +44,10 @@ resource "aws_lambda_function" "incident" {
       BEDROCK_CONNECT_TIMEOUT_SECONDS     = "5"
       BEDROCK_READ_TIMEOUT_SECONDS        = "60"
       BEDROCK_MAX_EVIDENCE_CHARS          = "30000"
-      ENABLE_BEDROCK_GUARDRAILS            = tostring(var.enable_bedrock_guardrails)
+      BEDROCK_KNOWLEDGE_BASE_ID           = aws_bedrockagent_knowledge_base.runbooks.id
+      ENABLE_BEDROCK_GUARDRAILS           = tostring(var.enable_bedrock_guardrails)
       BEDROCK_GUARDRAIL_ID                = var.enable_bedrock_guardrails ? aws_bedrock_guardrail.incident[0].guardrail_id : ""
-      BEDROCK_GUARDRAIL_VERSION = var.enable_bedrock_guardrails ? aws_bedrock_guardrail_version.incident[0].version : ""
+      BEDROCK_GUARDRAIL_VERSION           = var.enable_bedrock_guardrails ? aws_bedrock_guardrail_version.incident[0].version : ""
       CLOUDWATCH_LOG_GROUPS               = join(",", var.cloudwatch_log_groups)
       CLOUDWATCH_LOG_LOOKBACK_MINUTES     = "15"
       CLOUDWATCH_LOG_QUERY_TIMEOUT_SECONDS = "30"
@@ -71,8 +66,8 @@ resource "aws_lambda_function" "incident" {
       LAMBDA_TIMEOUT_SECONDS              = tostring(var.lambda_timeout_seconds)
       AWS_API_TIMEOUT_SECONDS             = "10"
       INVESTIGATION_MAX_CONCURRENCY       = "4"
-      PROMPT_VERSION                      = "1.0"
-      APPROVAL_API_URL = aws_apigatewayv2_api.approval.api_endpoint
+      PROMPT_VERSION                      = "2.0"
+      APPROVAL_API_URL                    = aws_apigatewayv2_api.approval.api_endpoint
     }
   }
 
@@ -82,34 +77,22 @@ resource "aws_lambda_function" "incident" {
     system_log_level      = "WARN"
     log_group             = aws_cloudwatch_log_group.incident.name
   }
-
-  tracing_config {
-    mode = "Active"
-  }
-
+  tracing_config { mode = "Active" }
   tags = local.common_tags
-
-  depends_on = [
-    aws_iam_role_policy.incident_permissions,
-    aws_cloudwatch_log_group.incident
-  ]
+  depends_on = [aws_iam_role_policy.incident_permissions, aws_iam_role_policy.incident_rag_retrieval, aws_cloudwatch_log_group.incident]
 }
 
 resource "aws_lambda_function" "approval" {
   function_name = "${var.project_name}-approval"
   description   = "Processes authenticated human approval decisions"
-
   filename         = "${path.module}/../dist/incident-agent.zip"
   source_code_hash = filebase64sha256("${path.module}/../dist/incident-agent.zip")
-
   role          = aws_iam_role.approval.arn
   handler       = "handlers.approval_handler.lambda_handler"
   runtime       = var.lambda_runtime
   architectures = [var.lambda_architecture]
-
   memory_size = 512
-  timeout     = 30
-
+  timeout = 30
   reserved_concurrent_executions = 3
 
   vpc_config {
@@ -119,32 +102,23 @@ resource "aws_lambda_function" "approval" {
 
   environment {
     variables = {
-      APP_NAME             = var.project_name
-      APP_ENV              = var.environment
-      APPROVAL_TABLE_NAME  = aws_dynamodb_table.approvals.name
-      APPROVAL_TTL_HOURS   = tostring(var.approval_ttl_hours)
-      APPROVER_GROUPS      = join(",", var.approver_groups)
+      APP_NAME = var.project_name
+      APP_ENV = var.environment
+      APPROVAL_TABLE_NAME = aws_dynamodb_table.approvals.name
+      APPROVAL_TTL_HOURS = tostring(var.approval_ttl_hours)
+      APPROVER_GROUPS = join(",", var.approver_groups)
       ENABLE_SNS_NOTIFICATIONS = "false"
-      AUDIT_LOG_LEVEL      = "INFO"
+      AUDIT_LOG_LEVEL = "INFO"
       AWS_API_TIMEOUT_SECONDS = "10"
     }
   }
-
   logging_config {
-    log_format            = "JSON"
+    log_format = "JSON"
     application_log_level = "INFO"
-    system_log_level      = "WARN"
-    log_group             = aws_cloudwatch_log_group.approval.name
+    system_log_level = "WARN"
+    log_group = aws_cloudwatch_log_group.approval.name
   }
-
-  tracing_config {
-    mode = "Active"
-  }
-
+  tracing_config { mode = "Active" }
   tags = local.common_tags
-
-  depends_on = [
-    aws_iam_role_policy.approval_permissions,
-    aws_cloudwatch_log_group.approval
-  ]
+  depends_on = [aws_iam_role_policy.approval_permissions, aws_cloudwatch_log_group.approval]
 }
