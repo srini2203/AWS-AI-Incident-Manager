@@ -1,80 +1,81 @@
-# Three-Tier Secure Highly Available AWS Infrastructure (Terraform)
+# Three-Tier Secure & Highly Available AWS Infrastructure
 
-**Status: v1.0 — locked.** Future changes get a new version and a
-CHANGELOG entry, not silent edits.
+**Project status: Terraform implementation and validation only.** The infrastructure has not been deployed to a live AWS account.
 
 [![Terraform](https://img.shields.io/badge/IaC-Terraform-623CE4?logo=terraform)]()
 [![AWS](https://img.shields.io/badge/Cloud-AWS-FF9900?logo=amazon-aws)]()
 
 ## Overview
 
-A three-tier AWS architecture — web (ALB), application (EC2/ASG), and
-data (RDS Multi-AZ) — designed and implemented as Terraform, built while
-studying for the AWS Solutions Architect Associate (SAA-C03)
-certification.
+A three-tier AWS architecture with a web tier (Application Load Balancer), application tier (EC2 Auto Scaling Group), and data tier (Amazon RDS Multi-AZ). The infrastructure is defined using Terraform and was developed as part of hands-on preparation for the AWS Solutions Architect Associate (SAA-C03) certification.
 
 ## Architecture
 
 ![Architecture](architecture/images/Architecture_Diagram.png)
 
-Full write-up: [`architecture/architecture-specification.md`](architecture/architecture-specification.md)
+Full write-up: [architecture/architecture-specification.md](architecture/architecture-specification.md)
 
 ## Deployment Status
 
-This project's Terraform is written and validated (`terraform validate`
-passes cleanly) but **not applied to a live AWS account**, to avoid
-ongoing cost while it sits as a portfolio piece.
+The Terraform configuration has been written and validated with `terraform validate`. It has **not been applied to a live AWS account**. No live deployment, production operation, or end-to-end AWS availability claim is made for this repository snapshot.
 
-The screenshots in [`/screenshots`](screenshots/) are from hands-on
-console configuration of the same services during SAA study — see
-[`docs/console-walkthrough.md`](docs/console-walkthrough.md) for how
-each one maps to the Terraform files.
+The screenshots in [screenshots/](screenshots/) document hands-on AWS console configuration of the same services during SAA study. See [docs/console-walkthrough.md](docs/console-walkthrough.md) for how those exercises map to the Terraform files. The screenshots should be understood as learning evidence, not proof that this Terraform project was deployed.
 
-## Services Used
+## AWS Services Represented
 
-| Service | Purpose |
+| Service | Intended role |
 |---|---|
-| VPC, public/private subnets | Network isolation across 3 tiers |
-| Internet Gateway / NAT Gateway | Public ingress / controlled private egress |
-| Application Load Balancer | Layer 7 routing, health checks |
-| Auto Scaling Group | Elasticity, self-healing |
-| RDS MySQL (Multi-AZ) | Automatic failover |
-| Secrets Manager | No hardcoded DB credentials |
-| IAM Roles | No long-lived credentials on EC2 |
-| CloudWatch + SNS | Alarming |
+| VPC and public/private subnets | Network isolation across the three tiers |
+| Internet Gateway and NAT Gateway | Public ingress and controlled private egress |
+| Application Load Balancer | Layer 7 routing and health checks |
+| EC2 Auto Scaling Group | Application capacity and instance replacement |
+| Amazon RDS for MySQL (Multi-AZ) | Managed relational database with multi-AZ failover capability |
+| AWS Secrets Manager | Storage for database credentials |
+| IAM roles | Instance permissions without long-lived credentials |
+| Amazon CloudWatch and Amazon SNS | Monitoring and alert notifications |
 
 ## Repository Structure
 
 ```text
-three-tier-ha-aws/
-├── architecture/     — design doc + diagrams
-├── terraform/        — flat .tf files, validate-only
-├── docs/             — decisions, security, cost, tradeoffs, interview prep
-└── screenshots/      — hands-on AWS console evidence from SAA study
+AWS-AI-Incident-Manager/
+├── architecture/     — design specification and diagrams
+├── terraform/        — Terraform infrastructure configuration
+├── docs/             — decisions, security, cost, trade-offs, and console walkthrough
+└── screenshots/      — AWS console learning evidence
 ```
 
 ## Getting Started
 
+Requirements: Terraform CLI and an AWS account configured locally if you want to inspect a plan. Running the commands below does not deploy infrastructure.
+
 ```bash
 cd terraform
-cp terraform.tfvars.example terraform.tfvars   # fill in your own values
+cp terraform.tfvars.example terraform.tfvars
+# Set values appropriate for your own environment.
 terraform init
 terraform validate
-terraform plan   # optional — shows what WOULD be created; not applied in this repo
+terraform plan
 ```
+
+Review the plan carefully before considering any apply operation. Applying the configuration may create billable AWS resources.
 
 ## Learning Outcomes
 
-VPC design, subnet tiering, security group least-privilege, RDS
-Multi-AZ, Auto Scaling, IAM roles, Terraform fundamentals, and
-translating hands-on console work into Infrastructure as Code.
+- Designing a three-tier VPC network with public and private subnets
+- Applying security-group boundaries between tiers
+- Modelling an Application Load Balancer and EC2 Auto Scaling Group
+- Configuring an RDS Multi-AZ database architecture
+- Using IAM roles and Secrets Manager in infrastructure design
+- Translating AWS console learning into Infrastructure as Code
 
-## Future Improvements
+## Possible Future Work
 
-- Live deployment on AWS free tier
-- WAF on the ALB
-- CI/CD pipeline (GitHub Actions)
-- Custom least-privilege IAM policy for Secrets Manager access
+These are not implemented or validated in this repository snapshot:
+
+- Deploy and verify the architecture in an AWS account
+- Add AWS WAF protection to the load balancer
+- Add a CI/CD workflow with GitHub Actions
+- Refine least-privilege IAM permissions for Secrets Manager access
 
 ## Author
 
